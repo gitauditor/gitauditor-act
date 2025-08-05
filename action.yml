@@ -1,0 +1,90 @@
+name: 'GitAuditor Security Scan'
+description: 'Automatically scan your GitHub repositories for security vulnerabilities, misconfigurations, and compliance issues'
+author: 'GitAuditor.io'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  gitauditor_token:
+    description: 'GitAuditor API token for authentication'
+    required: true
+  api_url:
+    description: 'GitAuditor API base URL'
+    required: false
+    default: 'https://api.gitauditor.io'
+  scan_type:
+    description: 'Type of scan to perform (repository, organization, or enterprise)'
+    required: false
+    default: 'repository'
+  organization_id:
+    description: 'Organization ID to scan (required for organization/enterprise scans)'
+    required: false
+  enterprise_id:
+    description: 'Enterprise ID to scan (required for enterprise scans)'
+    required: false
+  check_types:
+    description: 'Comma-separated list of check types to run (e.g., branch_protection,secrets,dependabot)'
+    required: false
+    default: 'branch_protection,admin_rights,dependabot,secrets,secret_scanning'
+  visibility_filter:
+    description: 'Repository visibility filter for org/enterprise scans (public,internal,private)'
+    required: false
+    default: 'public,internal,private'
+  fail_on_issues:
+    description: 'Whether to fail the action if security issues are found'
+    required: false
+    default: 'false'
+  severity_threshold:
+    description: 'Minimum severity level to report (low, medium, high, critical)'
+    required: false
+    default: 'medium'
+  output_format:
+    description: 'Output format for results (json, sarif, table)'
+    required: false
+    default: 'table'
+  wait_for_completion:
+    description: 'Whether to wait for scan completion before finishing'
+    required: false
+    default: 'true'
+  timeout:
+    description: 'Maximum time to wait for scan completion (in minutes)'
+    required: false
+    default: '30'
+
+outputs:
+  scan_id:
+    description: 'The ID of the created scan'
+  status:
+    description: 'Final status of the scan'
+  issues_found:
+    description: 'Number of security issues found'
+  critical_issues:
+    description: 'Number of critical severity issues found'
+  high_issues:
+    description: 'Number of high severity issues found'
+  medium_issues:
+    description: 'Number of medium severity issues found'
+  low_issues:
+    description: 'Number of low severity issues found'
+  scan_url:
+    description: 'URL to view the scan results'
+  sarif_file:
+    description: 'Path to generated SARIF file (if output_format includes sarif)'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  env:
+    GITAUDITOR_TOKEN: ${{ inputs.gitauditor_token }}
+    API_URL: ${{ inputs.api_url }}
+    SCAN_TYPE: ${{ inputs.scan_type }}
+    ORGANIZATION_ID: ${{ inputs.organization_id }}
+    ENTERPRISE_ID: ${{ inputs.enterprise_id }}
+    CHECK_TYPES: ${{ inputs.check_types }}
+    VISIBILITY_FILTER: ${{ inputs.visibility_filter }}
+    FAIL_ON_ISSUES: ${{ inputs.fail_on_issues }}
+    SEVERITY_THRESHOLD: ${{ inputs.severity_threshold }}
+    OUTPUT_FORMAT: ${{ inputs.output_format }}
+    WAIT_FOR_COMPLETION: ${{ inputs.wait_for_completion }}
+    TIMEOUT: ${{ inputs.timeout }}

@@ -1,0 +1,47 @@
+name: GitAuditor Organization Security Scan
+
+on:
+  schedule:
+    # Run weekly on Sundays at 3 AM UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      organization_id:
+        description: 'Organization ID to scan (optional - will use current org if not provided)'
+        required: false
+        type: string
+      check_types:
+        description: 'Check types to run'
+        required: false
+        default: 'branch_protection,admin_rights,dependabot,secrets,secret_scanning'
+        type: string
+
+jobs:
+  organization-scan:
+    name: Organization Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run GitAuditor Organization Scan
+        uses: gitauditor/gitauditor-action@v1
+        with:
+          gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
+          scan_type: 'organization'
+          organization_id: ${{ inputs.organization_id }}
+          check_types: ${{ inputs.check_types || 'branch_protection,admin_rights,dependabot,secrets,secret_scanning' }}
+          visibility_filter: 'public,internal,private'
+          fail_on_issues: 'false'
+          severity_threshold: 'high'
+          output_format: 'table,sarif'
+          wait_for_completion: 'true'
+          timeout: '45'
+      
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitauditor-results.sarif
+        continue-on-error: true

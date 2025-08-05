@@ -1,0 +1,39 @@
+name: GitAuditor Repository Security Scan
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run GitAuditor Security Scan
+        uses: gitauditor/gitauditor-action@v1
+        with:
+          gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
+          scan_type: 'repository'
+          check_types: 'branch_protection,admin_rights,dependabot,secrets,secret_scanning'
+          fail_on_issues: 'true'
+          severity_threshold: 'medium'
+          output_format: 'table'
+          wait_for_completion: 'true'
+          timeout: '20'
+      
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitauditor-results.sarif
+        continue-on-error: true
