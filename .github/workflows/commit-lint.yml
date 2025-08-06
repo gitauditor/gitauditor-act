@@ -1,0 +1,122 @@
+name: Commit Message Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install commitlint
+        run: |
+          npm install -g @commitlint/config-conventional @commitlint/cli
+
+      - name: Create commitlint config
+        run: |
+          cat > commitlint.config.js << 'EOF'
+          module.exports = {
+            extends: ['@commitlint/config-conventional'],
+            rules: {
+              'type-enum': [
+                2,
+                'always',
+                [
+                  'feat',     // New feature
+                  'fix',      // Bug fix
+                  'docs',     // Documentation
+                  'style',    // Code style changes
+                  'refactor', // Code refactoring
+                  'perf',     // Performance improvements
+                  'test',     // Tests
+                  'build',    // Build system changes
+                  'ci',       // CI configuration
+                  'chore',    // Other changes
+                  'revert'    // Revert commits
+                ]
+              ],
+              'scope-enum': [
+                2,
+                'always',
+                [
+                  'action',
+                  'scan',
+                  'api',
+                  'docker',
+                  'inputs',
+                  'outputs',
+                  'auth',
+                  'sarif',
+                  'workflows',
+                  'docs',
+                  'tests',
+                  'ci',
+                  'deps'
+                ]
+              ],
+              'subject-case': [2, 'always', 'lower-case'],
+              'subject-empty': [2, 'never'],
+              'subject-full-stop': [2, 'never', '.'],
+              'header-max-length': [2, 'always', 72],
+              'body-leading-blank': [2, 'always'],
+              'footer-leading-blank': [2, 'always']
+            }
+          };
+          EOF
+
+      - name: Validate current commit (push)
+        if: github.event_name == 'push'
+        run: echo "${{ github.event.head_commit.message }}" | npx commitlint
+
+      - name: Validate PR commits
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Comment on PR (failure)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Commit Message Validation Failed
+              
+              Your commit messages don't follow the [Conventional Commits](https://www.conventionalcommits.org/) format.
+              
+              ### Required Format:
+              \`\`\`
+              <type>[optional scope]: <description>
+              
+              [optional body]
+              
+              [optional footer(s)]
+              \`\`\`
+              
+              ### Examples:
+              - \`feat(action): add SARIF output support\`
+              - \`fix(scan): resolve timeout handling\`
+              - \`docs: update troubleshooting guide\`
+              - \`refactor(api): optimize connection pooling\`
+              
+              ### Breaking Changes:
+              - \`feat!: change input parameter names\`
+              - \`feat: add new feature\n\nBREAKING CHANGE: removes old inputs\`
+              
+              Please review the [Conventional Commits Guide](../blob/main/CONVENTIONAL_COMMITS.md) and amend your commit messages.
+              
+              **Tip:** Use \`git commit --amend\` to fix the last commit message.`
+            })

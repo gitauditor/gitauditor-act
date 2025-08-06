@@ -1,0 +1,146 @@
+name: Semantic Versioning
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  semantic-version:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      changelog: ${{ steps.version.outputs.changelog }}
+      skipped: ${{ steps.version.outputs.skipped }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Git Semantic Version
+        id: version
+        uses: PaulHatch/semantic-version@v5.4.0
+        with:
+          # The prefix to use to identify tags
+          tag_prefix: "v"
+          # A string which, if present in a git commit, indicates that a change represents a major (breaking) change
+          major_pattern: "BREAKING CHANGE:"
+          # A string which, if present in a git commit, indicates that a change represents a minor (feature) change
+          minor_pattern: "feat:"
+          # A string to determine the format of the version output
+          version_format: "${major}.${minor}.${patch}"
+          # If this is set to true, *every* commit will be treated as a new version
+          bump_each_commit: false
+          # If true, the body of commits will also be searched for major/minor patterns to determine the version type
+          search_commit_body: true
+          # The output method used to generate list of users, 'csv' or 'json'
+          user_format_type: "csv"
+          # Prevents pre-v1.0.0 version from automatically incrementing the major version
+          enable_prerelease_mode: false
+
+      - name: Update VERSION file
+        if: github.event_name == 'push' && steps.version.outputs.skipped == 'false'
+        run: |
+          echo "${{ steps.version.outputs.version }}" > VERSION
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add VERSION
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update VERSION to ${{ steps.version.outputs.version }} [skip ci]" && git push)
+
+      - name: Create Release
+        if: github.event_name == 'push' && steps.version.outputs.skipped == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version_tag }}
+          name: Release ${{ steps.version.outputs.version_tag }}
+          body: |
+            ## What's Changed
+
+            ${{ steps.version.outputs.changelog }}
+
+            ## Version Details
+            - **Version**: ${{ steps.version.outputs.version }}
+            - **Previous Version**: ${{ steps.version.outputs.previous_version }}
+            - **Version Type**: ${{ steps.version.outputs.version_type }}
+
+            ## GitAuditor Action
+            This release contains updates to the GitAuditor Posture Scan GitHub Action including:
+            - Git posture scanning capabilities for repositories, organizations, and enterprises
+            - Integration with GitAuditor.io API
+            - SARIF output for GitHub Security tab
+            - Customizable security checks and thresholds
+
+            ### Using this version
+            You can use this version in your workflows:
+            ```yaml
+            - uses: gitauditor/gitauditor-action@${{ steps.version.outputs.version_tag }}
+            ```
+
+            Or use the major version tag for automatic updates:
+            ```yaml
+            - uses: gitauditor/gitauditor-action@v${{ steps.version.outputs.major }}
+            ```
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.previous_tag }}...${{ steps.version.outputs.version_tag }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Major Version Tag
+        if: github.event_name == 'push' && steps.version.outputs.skipped == 'false'
+        run: |
+          git tag -f v${{ steps.version.outputs.major }}
+          git push origin v${{ steps.version.outputs.major }} --force
+
+      - name: Update Version Info
+        if: steps.version.outputs.skipped == 'false'
+        run: |
+          echo "## 📦 Version Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Tag**: ${{ steps.version.outputs.version_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Previous Version**: ${{ steps.version.outputs.previous_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version Type**: ${{ steps.version.outputs.version_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Marketplace" >> $GITHUB_STEP_SUMMARY
+          echo "This version will be available in the GitHub Marketplace as:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`gitauditor/gitauditor-action@${{ steps.version.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`gitauditor/gitauditor-action@v${{ steps.version.outputs.major }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.version.outputs.skipped == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🏷️ Semantic Version Preview
+
+              This PR will create version: **${{ steps.version.outputs.version }}**
+
+              - **Version Type**: ${{ steps.version.outputs.version_type }}
+              - **Previous Version**: ${{ steps.version.outputs.previous_version }}
+
+              ### Changelog Preview
+              ${{ steps.version.outputs.changelog }}
+
+              ### Usage After Merge
+              Once merged, this version will be available as:
+              - \`gitauditor/gitauditor-action@${{ steps.version.outputs.version_tag }}\`
+              - \`gitauditor/gitauditor-action@v${{ steps.version.outputs.major }}\`
+              `
+            })

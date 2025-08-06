@@ -12,6 +12,7 @@ import requests
 from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timezone
 import argparse
+from version import get_version, get_version_info
 
 def log(message: str, level: str = "INFO"):
     """Log message with timestamp"""
@@ -46,7 +47,7 @@ class GitAuditorClient:
         self.session.headers.update({
             'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json',
-            'User-Agent': 'GitAuditor-GitHub-Action/1.0'
+            'User-Agent': f'GitAuditor-GitHub-Action/{get_version()}'
         })
     
     def get_organization_by_name(self, org_name: str) -> Optional[Dict]:
@@ -296,7 +297,8 @@ def map_severity_to_sarif_level(severity: str) -> str:
 
 def main():
     """Main function"""
-    log("Starting GitAuditor scan")
+    version_info = get_version_info()
+    log(f"Starting GitAuditor scan (Action v{version_info['version']})")
     
     # Get configuration from environment
     api_url = os.environ.get("API_URL", "https://api.gitauditor.io")

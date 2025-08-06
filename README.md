@@ -1,12 +1,12 @@
-# GitAuditor Security Scan Action
+# GitAuditor Posture Scan Action
 
-[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-GitAuditor%20Security%20Scan-blue.svg?colorA=24292e&colorB=0366d6&style=flat&longCache=true&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAM6wAADOsB5dZE0gAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAERSURBVCiRhZG/SsMxFEZPfsVJ61jbxaF0cRQRcRJ9hlYn30IHN/+9iquDCOIsblIrOjqKgy5aKoJQj4n3NwhJgUYyoFw/8PvyJYHArT+zw+f93v1+yyBYU3VfGf9lXUkN8kRdm73QfZ4Uu2z73+pO4mQUGJ/9zGo/TGW89Q8oLnZj/s1PuJ9Ev9p+7Axt1M5lmBNM4tMTqmvVtUu1sMb8Bi8NuHW3kJdBjxX7rMmTsQz2y0ysZJ6x4MRdBxh4AXYQTM9z8EKg0TwXpzJrFFdTPLWFiOaTpfJXHhTUmyUmVhJnNzIJdDT4x9J4lfqjl7cWJ3JtdPKhRg==)](https://github.com/marketplace/actions/gitauditor-security-scan)
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-GitAuditor%20Posture%20Scan-blue.svg?colorA=24292e&colorB=0366d6&style=flat&longCache=true&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAM6wAADOsB5dZE0gAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAERSURBVCiRhZG/SsMxFEZPfsVJ61jbxaF0cRQRcRJ9hlYn30IHN/+9iquDCOIsblIrOjqKgy5aKoJQj4n3NwhJgUYyoFw/8PvyJYHArT+zw+f93v1+yyBYU3VfGf9lXUkN8kRdm73QfZ4Uu2z73+pO4mQUGJ/9zGo/TGW89Q8oLnZj/s1PuJ9Ev9p+7Axt1M5lmBNM4tMTqmvVtUu1sMb8Bi8NuHW3kJdBjxX7rMmTsQz2y0ysZJ6x4MRdBxh4AXYQTM9z8EKg0TwXpzJrFFdTPLWFiOaTpfJXHhTUmyUmVhJnNzIJdDT4x9J4lfqjl7cWJ3JtdPKhRg==)](https://github.com/marketplace/actions/gitauditor-posture-scan)
 
-A GitHub Action for automated security scanning of your repositories using [GitAuditor.io](https://gitauditor.io), a comprehensive Git posture management solution.
+A GitHub Action for automated git posture scanning of your repositories using [GitAuditor.io](https://gitauditor.io), a comprehensive Git Posture Management (GPM) solution.
 
 ## Features
 
-- 🔍 **Comprehensive Security Scanning**: Detect misconfigurations, vulnerabilities, and compliance issues
+- 🔍 **Comprehensive Git Posture Scanning**: Detect misconfigurations, vulnerabilities, and compliance issues
 - 🏢 **Multi-Scope Support**: Scan individual repositories, entire organizations, or enterprises
 - 🎯 **Customizable Checks**: Choose specific security checks to run based on your needs
 - 📊 **Multiple Output Formats**: Get results in table, JSON, or SARIF format
