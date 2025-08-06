@@ -256,3 +256,5 @@ This action is released under the [MIT License](LICENSE).
 ---
 
 Made with ❤️ by the [GitAuditor.io](https://gitauditor.io) team
+
+> **Note**: This action follows semantic versioning. Check our [releases](https://github.com/gitauditor/gitauditor-act/releases) for the latest version.
