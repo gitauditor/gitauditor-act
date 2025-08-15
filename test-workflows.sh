@@ -115,42 +115,52 @@ check_secrets_file() {
         fi
     fi
     
-    # Summary and guidance
-    if [[ "$gitauditor_token_ok" = true ]]; then
-        print_success "GitAuditor token configured - ready for testing"
-        
-        # Show full SHA256 hashes for verification/debugging
+    # Show token hashes if any tokens are available
+    local show_hashes=false
+    local gitauditor_token_value=""
+    local github_token_value=""
+    
+    # Get GITAUDITOR_TOKEN value (from environment or file)
+    if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
+        gitauditor_token_value="$GITAUDITOR_TOKEN"
+        show_hashes=true
+    elif [[ -f "$secrets_file" ]] && grep -q "GITAUDITOR_TOKEN" "$secrets_file"; then
+        gitauditor_token_value=$(grep "GITAUDITOR_TOKEN" "$secrets_file" | cut -d'=' -f2-)
+        if [[ -n "$gitauditor_token_value" && "$gitauditor_token_value" != "your_gitauditor_token_here" ]]; then
+            show_hashes=true
+        fi
+    fi
+    
+    # Get GITHUB_TOKEN value (from environment or file)
+    if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
+        github_token_value="$GITHUB_TOKEN"
+        show_hashes=true
+    elif [[ -f "$secrets_file" ]] && grep -q "GITHUB_TOKEN" "$secrets_file"; then
+        github_token_value=$(grep "GITHUB_TOKEN" "$secrets_file" | cut -d'=' -f2-)
+        if [[ -n "$github_token_value" && "$github_token_value" != "your_github_token_here" ]]; then
+            show_hashes=true
+        fi
+    fi
+    
+    # Show token verification hashes if any tokens are available
+    if [[ "$show_hashes" = true ]]; then
         print_status ""
         print_status "Token verification hashes:"
-        
-        # GITAUDITOR_TOKEN hash (from environment or file)
-        local gitauditor_token_value=""
-        if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
-            gitauditor_token_value="$GITAUDITOR_TOKEN"
-        elif [[ -f "$secrets_file" ]] && grep -q "GITAUDITOR_TOKEN" "$secrets_file"; then
-            gitauditor_token_value=$(grep "GITAUDITOR_TOKEN" "$secrets_file" | cut -d'=' -f2-)
-        fi
         
         if [[ -n "$gitauditor_token_value" && "$gitauditor_token_value" != "your_gitauditor_token_here" ]]; then
             local full_hash=$(echo "$gitauditor_token_value" | shasum -a 256 | cut -d' ' -f1)
             print_status "  GITAUDITOR_TOKEN SHA256: $full_hash"
         fi
         
-        # GITHUB_TOKEN hash (from environment or file) 
-        local github_token_value=""
-        if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
-            github_token_value="$GITHUB_TOKEN"
-        elif [[ -f "$secrets_file" ]] && grep -q "GITHUB_TOKEN" "$secrets_file"; then
-            github_token_value=$(grep "GITHUB_TOKEN" "$secrets_file" | cut -d'=' -f2-)
-        fi
-        
         if [[ -n "$github_token_value" && "$github_token_value" != "your_github_token_here" ]]; then
             local full_hash=$(echo "$github_token_value" | shasum -a 256 | cut -d' ' -f1)
             print_status "  GITHUB_TOKEN SHA256: $full_hash"
-        elif [[ "$github_token_ok" = false ]]; then
-            print_status "  GITHUB_TOKEN not set (optional for most tests)"
         fi
-        
+    fi
+    
+    # Summary and guidance
+    if [[ "$gitauditor_token_ok" = true ]]; then
+        print_success "GitAuditor token configured - ready for testing"
         return 0
     else
         print_error "GITAUDITOR_TOKEN not properly configured"
@@ -384,10 +394,17 @@ main() {
     
     # Step 2: Check secrets file
     local secrets_ok=true
+    local has_some_token=false
+    
     if ! check_secrets_file; then
         secrets_ok=false
-        print_warning "Continuing without proper secrets configuration"
-        print_warning "Some workflows may fail without proper GITAUDITOR_TOKEN"
+        # Check if we at least have GITHUB_TOKEN for basic testing
+        if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
+            has_some_token=true
+            print_warning "GITAUDITOR_TOKEN missing but GITHUB_TOKEN available for basic testing"
+        else
+            print_warning "No tokens configured - workflows may fail"
+        fi
     fi
     
     # Step 3: List workflows
@@ -395,27 +412,18 @@ main() {
         exit 1
     fi
     
-    # Step 4: Interactive workflow testing
+    # Step 4: Direct workflow testing (no redundant question)
     echo ""
-    read -p "Would you like to test workflows? (y/n): " test_choice
+    if [[ "$secrets_ok" = false && "$has_some_token" = false ]]; then
+        print_warning "Testing without any tokens may cause failures"
+        read -p "Continue anyway? (y/n): " continue_choice
+        case "$continue_choice" in
+            y|Y|yes|YES) ;;
+            *) print_status "Exiting..."; exit 0 ;;
+        esac
+    fi
     
-    case "$test_choice" in
-        y|Y|yes|YES)
-            if [[ "$secrets_ok" = false ]]; then
-                print_warning "Testing without proper secrets may cause failures"
-                read -p "Continue anyway? (y/n): " continue_choice
-                case "$continue_choice" in
-                    y|Y|yes|YES) ;;
-                    *) print_status "Exiting..."; exit 0 ;;
-                esac
-            fi
-            
-            select_workflow
-            ;;
-        *)
-            print_status "Skipping workflow testing"
-            ;;
-    esac
+    select_workflow
     
     print_success "Script completed!"
 }
