@@ -188,6 +188,16 @@ detect_workflow_event() {
     fi
 }
 
+# Generate SHA256 hash of a token for display
+hash_token() {
+    local token="$1"
+    if [[ -n "$token" ]]; then
+        echo "$token" | shasum -a 256 | cut -d' ' -f1 | cut -c1-8
+    else
+        echo "none"
+    fi
+}
+
 # Build secrets arguments for act command
 build_secrets_args() {
     local secrets_args=""
@@ -209,6 +219,29 @@ build_secrets_args() {
     echo "$secrets_args"
 }
 
+# Build display version of secrets args with hashed tokens
+build_secrets_args_display() {
+    local secrets_args=""
+    
+    # Add environment variables as secrets with hashed values
+    if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
+        local hash=$(hash_token "$GITAUDITOR_TOKEN")
+        secrets_args="$secrets_args --secret GITAUDITOR_TOKEN=\"sha256:$hash...\""
+    fi
+    
+    if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
+        local hash=$(hash_token "$GITHUB_TOKEN")
+        secrets_args="$secrets_args --secret GITHUB_TOKEN=\"sha256:$hash...\""
+    fi
+    
+    # Add .secrets file if it exists
+    if [[ -f ".secrets" ]]; then
+        secrets_args="$secrets_args --secret-file .secrets"
+    fi
+    
+    echo "$secrets_args"
+}
+
 # Run workflow dry-run
 run_workflow_dry_run() {
     local workflow_name="$1"
@@ -222,24 +255,27 @@ run_workflow_dry_run() {
     # Detect the best event to use for this workflow
     local event=$(detect_workflow_event "$workflow_file")
     
-    # Build secrets arguments
+    # Build secrets arguments (actual and display versions)
     local secrets_args=$(build_secrets_args)
+    local secrets_args_display=$(build_secrets_args_display)
     
     print_header "Running Dry-Run for: $workflow_name"
     print_status "Detected event type: $event"
     
-    # Show token sources
+    # Show token sources with hashes
     if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
-        print_status "Using GITAUDITOR_TOKEN from environment"
+        local hash=$(hash_token "$GITAUDITOR_TOKEN")
+        print_status "Using GITAUDITOR_TOKEN from environment (sha256:$hash...)"
     fi
     if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
-        print_status "Using GITHUB_TOKEN from environment"
+        local hash=$(hash_token "$GITHUB_TOKEN")
+        print_status "Using GITHUB_TOKEN from environment (sha256:$hash...)"
     fi
     if [[ -f ".secrets" ]]; then
         print_status "Using additional secrets from .secrets file"
     fi
     
-    print_status "Executing: act $event --dryrun -W \"$workflow_file\" $secrets_args"
+    print_status "Executing: act $event --dryrun -W \"$workflow_file\" $secrets_args_display"
     
     # Run act with dry-run flag for detected event and collected secrets
     if eval "act \"$event\" --dryrun -W \"$workflow_file\" $secrets_args" 2>&1; then
