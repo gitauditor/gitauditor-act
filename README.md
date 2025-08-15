@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: gitauditor/gitauditor-action@v1
+      - uses: gitauditor/gitauditor-act@v1
         with:
           gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
 ```
@@ -97,7 +97,7 @@ jobs:
 ### Repository Security Scan
 
 ```yaml
-- uses: gitauditor/gitauditor-action@v1
+- uses: gitauditor/gitauditor-act@v1
   with:
     gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
     scan_type: repository
@@ -109,7 +109,7 @@ jobs:
 ### Organization-Wide Scan
 
 ```yaml
-- uses: gitauditor/gitauditor-action@v1
+- uses: gitauditor/gitauditor-act@v1
   with:
     gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
     scan_type: organization
@@ -139,7 +139,7 @@ jobs:
       
       - name: Run Security Scan
         id: scan
-        uses: gitauditor/gitauditor-action@v1
+        uses: gitauditor/gitauditor-act@v1
         with:
           gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
           check_types: 'secrets,branch_protection'
@@ -169,7 +169,7 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: gitauditor/gitauditor-action@v1
+      - uses: gitauditor/gitauditor-act@v1
         with:
           gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
           scan_type: organization
@@ -213,7 +213,7 @@ check_types: 'branch_protection,secrets,iam'
 The action can generate SARIF (Static Analysis Results Interchange Format) files for integration with GitHub's Security tab:
 
 ```yaml
-- uses: gitauditor/gitauditor-action@v1
+- uses: gitauditor/gitauditor-act@v1
   with:
     gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
     output_format: 'sarif'
@@ -253,7 +253,7 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: gitauditor/gitauditor-action@v1
+      - uses: gitauditor/gitauditor-act@v1
         with:
           gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
 ```
