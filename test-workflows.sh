@@ -77,40 +77,61 @@ check_act_installation() {
     fi
 }
 
-# Check for .secrets file
+# Check for secrets configuration (environment and .secrets file)
 check_secrets_file() {
     print_header "Checking Secrets Configuration"
     
     local secrets_file=".secrets"
+    local gitauditor_token_ok=false
+    local github_token_ok=false
     
-    if [[ -f "$secrets_file" ]]; then
-        print_success "Found $secrets_file"
-        
-        # Check if GITAUDITOR_TOKEN is present
-        if grep -q "GITAUDITOR_TOKEN" "$secrets_file"; then
+    # Check GITAUDITOR_TOKEN
+    if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
+        print_success "GITAUDITOR_TOKEN found in environment"
+        gitauditor_token_ok=true
+    elif [[ -f "$secrets_file" ]] && grep -q "GITAUDITOR_TOKEN" "$secrets_file"; then
+        local token_line=$(grep "GITAUDITOR_TOKEN" "$secrets_file")
+        if [[ "$token_line" =~ GITAUDITOR_TOKEN=.+ && ! "$token_line" =~ your_gitauditor_token_here ]]; then
             print_success "GITAUDITOR_TOKEN found in $secrets_file"
-            
-            # Check if token is not empty
-            local token_line=$(grep "GITAUDITOR_TOKEN" "$secrets_file")
-            if [[ "$token_line" =~ GITAUDITOR_TOKEN=.+ ]]; then
-                print_success "GITAUDITOR_TOKEN appears to have a value"
-            else
-                print_warning "GITAUDITOR_TOKEN found but appears to be empty"
-                print_status "Please ensure your token has a value: GITAUDITOR_TOKEN=your_token_here"
-            fi
+            gitauditor_token_ok=true
         else
-            print_warning "GITAUDITOR_TOKEN not found in $secrets_file"
-            print_status "Please add your GitAuditor token to $secrets_file:"
-            echo "  GITAUDITOR_TOKEN=your_token_here"
+            print_warning "GITAUDITOR_TOKEN found in $secrets_file but appears to be placeholder"
         fi
-        
+    else
+        print_warning "GITAUDITOR_TOKEN not configured"
+        print_status "Set it via environment: export GITAUDITOR_TOKEN=your_token_here"
+        print_status "Or add to $secrets_file: echo 'GITAUDITOR_TOKEN=your_token_here' > $secrets_file"
+    fi
+    
+    # Check GITHUB_TOKEN (optional)
+    if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
+        print_success "GITHUB_TOKEN found in environment (optional)"
+        github_token_ok=true
+    elif [[ -f "$secrets_file" ]] && grep -q "GITHUB_TOKEN" "$secrets_file"; then
+        local token_line=$(grep "GITHUB_TOKEN" "$secrets_file")
+        if [[ "$token_line" =~ GITHUB_TOKEN=.+ && ! "$token_line" =~ your_github_token_here ]]; then
+            print_success "GITHUB_TOKEN found in $secrets_file (optional)"
+            github_token_ok=true
+        fi
+    fi
+    
+    # Summary and guidance
+    if [[ "$gitauditor_token_ok" = true ]]; then
+        print_success "GitAuditor token configured - ready for testing"
+        if [[ "$github_token_ok" = false ]]; then
+            print_status "GITHUB_TOKEN not set (optional for most tests)"
+        fi
         return 0
     else
-        print_error "$secrets_file not found"
-        print_status "Create $secrets_file with your GitAuditor token:"
-        echo "  echo 'GITAUDITOR_TOKEN=your_token_here' > $secrets_file"
+        print_error "GITAUDITOR_TOKEN not properly configured"
+        print_status ""
+        print_status "Setup options:"
+        print_status "1. Environment variable: export GITAUDITOR_TOKEN=your_token_here"
+        print_status "2. Create $secrets_file with: GITAUDITOR_TOKEN=your_token_here"
+        if [[ ! -f "$secrets_file" ]]; then
+            print_status "3. Copy template: cp .secrets.example $secrets_file"
+        fi
         print_warning "Make sure to add $secrets_file to .gitignore to avoid committing secrets!"
-        
         return 1
     fi
 }
@@ -167,6 +188,27 @@ detect_workflow_event() {
     fi
 }
 
+# Build secrets arguments for act command
+build_secrets_args() {
+    local secrets_args=""
+    
+    # Add environment variables as secrets
+    if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
+        secrets_args="$secrets_args --secret GITAUDITOR_TOKEN=\"$GITAUDITOR_TOKEN\""
+    fi
+    
+    if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
+        secrets_args="$secrets_args --secret GITHUB_TOKEN=\"$GITHUB_TOKEN\""
+    fi
+    
+    # Add .secrets file if it exists (act will merge with individual secrets)
+    if [[ -f ".secrets" ]]; then
+        secrets_args="$secrets_args --secret-file .secrets"
+    fi
+    
+    echo "$secrets_args"
+}
+
 # Run workflow dry-run
 run_workflow_dry_run() {
     local workflow_name="$1"
@@ -180,12 +222,27 @@ run_workflow_dry_run() {
     # Detect the best event to use for this workflow
     local event=$(detect_workflow_event "$workflow_file")
     
+    # Build secrets arguments
+    local secrets_args=$(build_secrets_args)
+    
     print_header "Running Dry-Run for: $workflow_name"
     print_status "Detected event type: $event"
-    print_status "Executing: act $event --dryrun -W \"$workflow_file\""
     
-    # Run act with dry-run flag for detected event
-    if act "$event" --dryrun -W "$workflow_file" --secret-file .secrets 2>&1; then
+    # Show token sources
+    if [[ -n "$GITAUDITOR_TOKEN" && "$GITAUDITOR_TOKEN" != "your_gitauditor_token_here" ]]; then
+        print_status "Using GITAUDITOR_TOKEN from environment"
+    fi
+    if [[ -n "$GITHUB_TOKEN" && "$GITHUB_TOKEN" != "your_github_token_here" ]]; then
+        print_status "Using GITHUB_TOKEN from environment"
+    fi
+    if [[ -f ".secrets" ]]; then
+        print_status "Using additional secrets from .secrets file"
+    fi
+    
+    print_status "Executing: act $event --dryrun -W \"$workflow_file\" $secrets_args"
+    
+    # Run act with dry-run flag for detected event and collected secrets
+    if eval "act \"$event\" --dryrun -W \"$workflow_file\" $secrets_args" 2>&1; then
         print_success "Dry-run completed successfully for $workflow_name"
         return 0
     else
