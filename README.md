@@ -293,6 +293,53 @@ jobs:
 - 🐛 [Report Issues](https://github.com/gitauditor/gitauditor-act/issues)
 - 📧 [Contact Support](mailto:support@gitauditor.io)
 
+## Local Testing
+
+You can test the GitAuditor Action workflows locally using [act](https://github.com/nektos/act) before committing changes.
+
+### Prerequisites
+
+1. **Install act**:
+   - **macOS**: `brew install act`
+   - **Linux**: `brew install act` or `curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash`
+
+2. **Configure secrets** (copy and modify the example):
+   ```bash
+   cp .secrets.example .secrets
+   # Edit .secrets with your actual GitAuditor token
+   ```
+
+### Testing Workflows
+
+Run the interactive testing script:
+
+```bash
+./test-workflows.sh
+```
+
+This script will:
+- ✅ Check if `act` is installed (with OS-specific installation instructions)
+- ✅ Validate your `.secrets` file and `GITAUDITOR_TOKEN`
+- ✅ List all available workflows
+- ✅ Run interactive dry-runs of selected workflows
+
+### Manual Testing
+
+You can also run workflows manually:
+
+```bash
+# Dry-run a specific workflow
+act --dry-run -W .github/workflows/example-repository-scan.yml --secret-file .secrets
+
+# List all workflows
+act -l
+
+# Run a workflow (actually execute, not just dry-run)
+act -W .github/workflows/example-repository-scan.yml --secret-file .secrets
+```
+
+**Note**: The `.secrets` file is automatically ignored by git to prevent accidental commits of sensitive information.
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
