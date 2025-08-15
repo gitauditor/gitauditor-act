@@ -148,6 +148,25 @@ list_workflows() {
     fi
 }
 
+# Detect the best event for a workflow
+detect_workflow_event() {
+    local workflow_file="$1"
+    
+    # Check for workflow_dispatch (preferred for testing)
+    if grep -q "workflow_dispatch:" "$workflow_file"; then
+        echo "workflow_dispatch"
+    # Check for pull_request
+    elif grep -q "pull_request:" "$workflow_file"; then
+        echo "pull_request"
+    # Check for push
+    elif grep -q "push:" "$workflow_file"; then
+        echo "push"
+    # Default to push if nothing else found
+    else
+        echo "push"
+    fi
+}
+
 # Run workflow dry-run
 run_workflow_dry_run() {
     local workflow_name="$1"
@@ -158,12 +177,15 @@ run_workflow_dry_run() {
         return 1
     fi
     
+    # Detect the best event to use for this workflow
+    local event=$(detect_workflow_event "$workflow_file")
+    
     print_header "Running Dry-Run for: $workflow_name"
+    print_status "Detected event type: $event"
+    print_status "Executing: act $event --dryrun -W \"$workflow_file\""
     
-    print_status "Executing: act --dry-run -W \"$workflow_file\""
-    
-    # Run act with dry-run flag
-    if act --dry-run -W "$workflow_file" --secret-file .secrets 2>&1; then
+    # Run act with dry-run flag for detected event
+    if act "$event" --dryrun -W "$workflow_file" --secret-file .secrets 2>&1; then
         print_success "Dry-run completed successfully for $workflow_name"
         return 0
     else
