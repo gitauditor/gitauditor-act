@@ -18,7 +18,7 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       changelog: ${{ steps.version.outputs.changelog }}
-      skipped: ${{ steps.version.outputs.skipped }}
+      version_type: ${{ steps.version.outputs.version_type }}
 
     steps:
       - name: Checkout
@@ -49,7 +49,7 @@ jobs:
           enable_prerelease_mode: false
 
       - name: Update VERSION file
-        if: github.event_name == 'push' && steps.version.outputs.skipped == 'false'
+        if: github.event_name == 'push' && steps.version.outputs.version_type != 'none'
         run: |
           echo "${{ steps.version.outputs.version }}" > VERSION
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -58,7 +58,7 @@ jobs:
           git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update VERSION to ${{ steps.version.outputs.version }} [skip ci]" && git push)
 
       - name: Create Release
-        if: github.event_name == 'push' && steps.version.outputs.skipped == 'false'
+        if: github.event_name == 'push' && steps.version.outputs.version_type != 'none'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.version.outputs.version_tag }}
@@ -99,13 +99,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update Major Version Tag
-        if: github.event_name == 'push' && steps.version.outputs.skipped == 'false'
+        if: github.event_name == 'push' && steps.version.outputs.version_type != 'none'
         run: |
           git tag -f v${{ steps.version.outputs.major }}
           git push origin v${{ steps.version.outputs.major }} --force
 
       - name: Update Version Info
-        if: steps.version.outputs.skipped == 'false'
+        if: steps.version.outputs.version_type != 'none'
         run: |
           echo "## 📦 Version Information" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -120,7 +120,7 @@ jobs:
           echo "- \`gitauditor/gitauditor-act@v${{ steps.version.outputs.major }}\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR
-        if: github.event_name == 'pull_request' && steps.version.outputs.skipped == 'false'
+        if: github.event_name == 'pull_request' && steps.version.outputs.version_type != 'none'
         uses: actions/github-script@v7
         with:
           script: |
