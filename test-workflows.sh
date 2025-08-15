@@ -117,17 +117,31 @@ check_secrets_file() {
 
 # List available workflows
 list_workflows() {
-    print_header "Available Workflows"
+    print_header "Available Test Workflows"
     
     local workflow_dir=".github/workflows"
     if [[ -d "$workflow_dir" ]]; then
-        print_status "Found workflows:"
-        for workflow in "$workflow_dir"/*.yml; do
+        print_status "Found example workflows for testing:"
+        local found_example=false
+        for workflow in "$workflow_dir"/example-*.yml; do
             if [[ -f "$workflow" ]]; then
                 local name=$(basename "$workflow" .yml)
                 echo "  - $name"
+                found_example=true
             fi
         done
+        
+        if [[ "$found_example" = false ]]; then
+            print_warning "No example workflows found (looking for example-*.yml files)"
+            print_status "All workflows in directory:"
+            for workflow in "$workflow_dir"/*.yml; do
+                if [[ -f "$workflow" ]]; then
+                    local name=$(basename "$workflow" .yml)
+                    echo "  - $name (CI workflow - not for local testing)"
+                fi
+            done
+            return 1
+        fi
     else
         print_error "No .github/workflows directory found"
         return 1
@@ -163,8 +177,8 @@ select_workflow() {
     local workflows=()
     local workflow_dir=".github/workflows"
     
-    # Build array of workflow names
-    for workflow in "$workflow_dir"/*.yml; do
+    # Build array of example workflow names only
+    for workflow in "$workflow_dir"/example-*.yml; do
         if [[ -f "$workflow" ]]; then
             local name=$(basename "$workflow" .yml)
             workflows+=("$name")
@@ -172,7 +186,8 @@ select_workflow() {
     done
     
     if [[ ${#workflows[@]} -eq 0 ]]; then
-        print_error "No workflows found"
+        print_error "No example workflows found for testing"
+        print_status "Looking for workflows matching pattern: example-*.yml"
         return 1
     fi
     
