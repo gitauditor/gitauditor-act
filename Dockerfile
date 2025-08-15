@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 LABEL maintainer="GitAuditor.io <support@gitauditor.io>"
 LABEL description="GitAuditor GitHub Action for git posture scanning"
-LABEL org.opencontainers.image.source="https://github.com/gitauditor/gitauditor-action"
+LABEL org.opencontainers.image.source="https://github.com/gitauditor/gitauditor-act"
 LABEL org.opencontainers.image.vendor="GitAuditor.io"
 LABEL org.opencontainers.image.title="GitAuditor Posture Scan Action"
 LABEL org.opencontainers.image.description="Automated git posture scanning for GitHub repositories"

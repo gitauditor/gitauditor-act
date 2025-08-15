@@ -96,7 +96,7 @@ def get_version_info() -> dict:
         pass
 
     # Add Docker image version info
-    info["docker_image"] = f"gitauditor/gitauditor-action:{version}"
+    info["docker_image"] = f"gitauditor/gitauditor-act:{version}"
     
     # Add marketplace info
     info["marketplace_url"] = "https://github.com/marketplace/actions/gitauditor-security-scan"

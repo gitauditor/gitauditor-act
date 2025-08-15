@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Run GitAuditor Security Scan
-        uses: gitauditor/gitauditor-action@v1
+        uses: gitauditor/gitauditor-act@v1
         with:
           gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
           scan_type: 'repository'
