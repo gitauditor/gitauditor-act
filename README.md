@@ -45,6 +45,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read        # Read repository metadata and files
+  security-events: write # Upload SARIF results (optional)
+
 jobs:
   security-scan:
     runs-on: ubuntu-latest
@@ -122,6 +126,11 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+permissions:
+  contents: read        # Read repository metadata
+  security-events: write # Upload SARIF results
+  pull-requests: write  # Comment on PRs (optional)
+
 jobs:
   security-check:
     runs-on: ubuntu-latest
@@ -151,6 +160,10 @@ name: Weekly Security Audit
 on:
   schedule:
     - cron: '0 2 * * 1'  # Every Monday at 2 AM
+
+permissions:
+  contents: read        # Read repository metadata
+  security-events: write # Upload SARIF results (optional)
 
 jobs:
   audit:
@@ -211,6 +224,40 @@ The action can generate SARIF (Static Analysis Results Interchange Format) files
     sarif_file: gitauditor-results.sarif
 ```
 
+## Permissions
+
+GitAuditor Action operates with **read-only** permissions by default. The action only reads repository metadata and configuration to perform security scans. No changes are made to your repository.
+
+### Required Permissions
+
+```yaml
+permissions:
+  contents: read        # Read repository metadata and files (required)
+  security-events: write # Upload SARIF results to GitHub Security tab (optional)
+  pull-requests: write  # Comment on pull requests with findings (optional)
+```
+
+- **`contents: read`** - Required for accessing repository information and configuration
+- **`security-events: write`** - Only needed if uploading SARIF results to GitHub Security tab
+- **`pull-requests: write`** - Only needed if you want the action to comment on PRs
+
+### Minimal Permissions Example
+
+For the most restrictive setup with read-only access:
+
+```yaml
+permissions:
+  contents: read  # Only read access needed
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: gitauditor/gitauditor-action@v1
+        with:
+          gitauditor_token: ${{ secrets.GITAUDITOR_TOKEN }}
+```
+
 ## Security Considerations
 
 - Store your GitAuditor token in GitHub Secrets, never in code
@@ -218,6 +265,7 @@ The action can generate SARIF (Static Analysis Results Interchange Format) files
 - Consider using GitHub's OIDC provider for enhanced security
 - Regularly rotate your API tokens
 - Review scan results in the GitAuditor dashboard for detailed analysis
+- The action operates with read-only permissions and never modifies your repository
 
 ## Troubleshooting
 
