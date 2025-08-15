@@ -83,12 +83,12 @@ jobs:
             ### Using this version
             You can use this version in your workflows:
             ```yaml
-            - uses: gitauditor/gitauditor-action@${{ steps.version.outputs.version_tag }}
+            - uses: gitauditor/gitauditor-act@${{ steps.version.outputs.version_tag }}
             ```
 
             Or use the major version tag for automatic updates:
             ```yaml
-            - uses: gitauditor/gitauditor-action@v${{ steps.version.outputs.major }}
+            - uses: gitauditor/gitauditor-act@v${{ steps.version.outputs.major }}
             ```
 
             **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.version.outputs.previous_tag }}...${{ steps.version.outputs.version_tag }}
@@ -116,8 +116,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Marketplace" >> $GITHUB_STEP_SUMMARY
           echo "This version will be available in the GitHub Marketplace as:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`gitauditor/gitauditor-action@${{ steps.version.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- \`gitauditor/gitauditor-action@v${{ steps.version.outputs.major }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`gitauditor/gitauditor-act@${{ steps.version.outputs.version_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`gitauditor/gitauditor-act@v${{ steps.version.outputs.major }}\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && steps.version.outputs.skipped == 'false'
@@ -140,7 +140,7 @@ jobs:
 
               ### Usage After Merge
               Once merged, this version will be available as:
-              - \`gitauditor/gitauditor-action@${{ steps.version.outputs.version_tag }}\`
-              - \`gitauditor/gitauditor-action@v${{ steps.version.outputs.major }}\`
+              - \`gitauditor/gitauditor-act@${{ steps.version.outputs.version_tag }}\`
+              - \`gitauditor/gitauditor-act@v${{ steps.version.outputs.major }}\`
               `
             })

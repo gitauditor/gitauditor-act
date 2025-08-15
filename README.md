@@ -289,8 +289,8 @@ jobs:
 ### Getting Help
 
 - 📖 [GitAuditor Documentation](https://docs.gitauditor.io)
-- 💬 [Community Support](https://github.com/gitauditor/gitauditor-action/discussions)
-- 🐛 [Report Issues](https://github.com/gitauditor/gitauditor-action/issues)
+- 💬 [Community Support](https://github.com/gitauditor/gitauditor-act/discussions)
+- 🐛 [Report Issues](https://github.com/gitauditor/gitauditor-act/issues)
 - 📧 [Contact Support](mailto:support@gitauditor.io)
 
 ## Contributing
