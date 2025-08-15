@@ -331,11 +331,13 @@ You can also run workflows manually:
 # Dry-run a specific workflow
 act workflow_dispatch --dryrun -W .github/workflows/example-repository-scan.yml --secret-file .secrets
 
+
 # List all workflows
 act -l
 
 # Run a workflow (actually execute, not just dry-run)
 act workflow_dispatch -W .github/workflows/example-repository-scan.yml --secret-file .secrets
+
 ```
 
 **Note**: The `.secrets` file is automatically ignored by git to prevent accidental commits of sensitive information.

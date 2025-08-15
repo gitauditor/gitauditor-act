@@ -78,6 +78,7 @@ check_act_installation() {
 }
 
 # Check for secrets configuration (environment and .secrets file)
+
 check_secrets_file() {
     print_header "Checking Secrets Configuration"
     
@@ -172,6 +173,7 @@ check_secrets_file() {
             print_status "3. Copy template: cp .secrets.example $secrets_file"
         fi
         print_warning "Make sure to add $secrets_file to .gitignore to avoid committing secrets!"
+
         return 1
     fi
 }
@@ -203,11 +205,13 @@ list_workflows() {
             done
             return 1
         fi
+
     else
         print_error "No .github/workflows directory found"
         return 1
     fi
 }
+
 
 # Detect the best event for a workflow
 detect_workflow_event() {
@@ -282,6 +286,7 @@ build_secrets_args_display() {
     echo "$secrets_args"
 }
 
+
 # Run workflow dry-run
 run_workflow_dry_run() {
     local workflow_name="$1"
@@ -319,6 +324,7 @@ run_workflow_dry_run() {
     
     # Run act with dry-run flag for detected event and collected secrets
     if eval "act \"$event\" --dryrun -W \"$workflow_file\" $secrets_args" 2>&1; then
+
         print_success "Dry-run completed successfully for $workflow_name"
         return 0
     else
@@ -334,6 +340,7 @@ select_workflow() {
     
     # Build array of example workflow names only
     for workflow in "$workflow_dir"/example-*.yml; do
+
         if [[ -f "$workflow" ]]; then
             local name=$(basename "$workflow" .yml)
             workflows+=("$name")
@@ -343,6 +350,7 @@ select_workflow() {
     if [[ ${#workflows[@]} -eq 0 ]]; then
         print_error "No example workflows found for testing"
         print_status "Looking for workflows matching pattern: example-*.yml"
+
         return 1
     fi
     
@@ -405,6 +413,7 @@ main() {
         else
             print_warning "No tokens configured - workflows may fail"
         fi
+
     fi
     
     # Step 3: List workflows
@@ -424,6 +433,7 @@ main() {
     fi
     
     select_workflow
+
     
     print_success "Script completed!"
 }
