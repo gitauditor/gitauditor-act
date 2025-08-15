@@ -1,5 +1,5 @@
 name: 'GitAuditor Posture Scan'
-description: 'Automatically scan your GitHub repositories for git posture, security vulnerabilities, misconfigurations, and compliance issues'
+description: 'Scan GitHub repositories for git posture, security vulnerabilities, misconfigurations, and compliance issues'
 author: 'GitAuditor.io'
 branding:
   icon: 'shield'
